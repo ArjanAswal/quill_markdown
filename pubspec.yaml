@@ -1,0 +1,23 @@
+name: quill_markdown
+description: A quill to markdown converter and vice versa
+version: 0.0.1
+author: Arjan Aswal
+homepage: github.com/ArjanAswal/quill_markdown.git
+repository: github.com/ArjanAswal/quill_markdown.git
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  quiver_hashcode: ^2.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+
