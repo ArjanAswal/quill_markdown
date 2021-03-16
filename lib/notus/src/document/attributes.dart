@@ -1,8 +1,9 @@
 // Copyright (c) 2018, the Zefyr project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
+
+import 'dart:ui' show hashList, hashValues;
 import 'package:collection/collection.dart';
-import 'package:quiver_hashcode/hashcode.dart';
 
 /// Scope of a style attribute, defines context in which an attribute can be
 /// applied.
@@ -186,7 +187,7 @@ class NotusAttribute<T> implements NotusAttributeBuilder<T> {
   }
 
   @override
-  int get hashCode => hash3(key, scope, value);
+  int get hashCode => hashValues(key, scope, value);
 
   @override
   String toString() => '$key: $value';
@@ -314,8 +315,8 @@ class NotusStyle {
 
   @override
   int get hashCode {
-    final hashes = _data.entries.map((entry) => hash2(entry.key, entry.value));
-    return hashObjects(hashes);
+    final hashes = _data.entries.map((entry) => hashValues(entry.key, entry.value));
+    return hashList(hashes);
   }
 
   @override
@@ -452,11 +453,11 @@ class EmbedAttribute extends NotusAttribute<Map<String, dynamic>> {
     final objects = [key, scope];
     if (value != null) {
       final valueHashes =
-          value.entries.map((entry) => hash2(entry.key, entry.value));
+          value.entries.map((entry) => hashValues(entry.key, entry.value));
       objects.addAll(valueHashes);
     } else {
       objects.add(value);
     }
-    return hashObjects(objects);
+    return hashList(objects);
   }
 }

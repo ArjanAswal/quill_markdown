@@ -5,9 +5,9 @@
 library quill_delta;
 
 import 'dart:math' as math;
+import 'dart:ui' show hashList, hashValues;
 
 import 'package:collection/collection.dart';
-import 'package:quiver_hashcode/hashcode.dart';
 
 const _attributeEquality = MapEquality<String, dynamic>(
   keys: DefaultEquality<String>(),
@@ -144,10 +144,10 @@ class Operation {
   int get hashCode {
     if (_attributes != null && _attributes.isNotEmpty) {
       int attrsHash =
-          hashObjects(_attributes.entries.map((e) => hash2(e.key, e.value)));
-      return hash3(key, value, attrsHash);
+          hashList(_attributes.entries.map((e) => hashValues(e.key, e.value)));
+      return hashValues(key, value, attrsHash);
     }
-    return hash2(key, value);
+    return hashValues(key, value);
   }
 
   @override
@@ -282,7 +282,7 @@ class Delta {
   }
 
   @override
-  int get hashCode => hashObjects(_operations);
+  int get hashCode => hashList(_operations);
 
   /// Retain [count] of characters from current position.
   void retain(int count, [Map<String, dynamic> attributes]) {
