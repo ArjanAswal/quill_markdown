@@ -12,7 +12,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  quiver_hashcode: ^2.0.0
   collection: ^1.14.13
   meta: ^1.2.4
 
