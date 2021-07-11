@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:quill_markdown/notus/convert.dart';
 import 'notus/notus.dart';
 
-String quillToMarkdown(String content) {
+String? quillToMarkdown(String content) {
   try {
     return notusMarkdown.encode(NotusDocument.fromJson(jsonDecode(content
         .replaceAll('"header":1', '"heading":1')
@@ -75,7 +75,7 @@ String quillToMarkdown(String content) {
   }
 }
 
-String markdownToQuill(String content) {
+String? markdownToQuill(String? content) {
   try {
     return jsonEncode(notusMarkdown.decode(content))
         .toString()

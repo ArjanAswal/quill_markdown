@@ -13,7 +13,7 @@ import 'node.dart';
 /// style.
 ///
 /// Block examples: lists, quotes, code snippets.
-class BlockNode extends ContainerNode<LineNode>
+class BlockNode extends ContainerNode<LineNode?>
     with StyledNodeMixin
     implements StyledNode {
   /// Creates new unmounted [BlockNode] with the same attributes.
@@ -38,7 +38,7 @@ class BlockNode extends ContainerNode<LineNode>
       final before = clone();
       insertBefore(before);
 
-      LineNode child = first;
+      LineNode child = first as LineNode;
       while (child != line) {
         child.unlink();
         before.add(child);
@@ -82,9 +82,9 @@ class BlockNode extends ContainerNode<LineNode>
       return;
     }
 
-    var block = this;
+    BlockNode block = this;
     if (!block.isFirst && block.previous is BlockNode) {
-      BlockNode prev = block.previous;
+      BlockNode prev = block.previous as BlockNode;
       if (prev.style == block.style) {
         block.moveChildren(prev);
         block.unlink();
@@ -92,7 +92,7 @@ class BlockNode extends ContainerNode<LineNode>
       }
     }
     if (!block.isLast && block.next is BlockNode) {
-      BlockNode nextBlock = block.next;
+      BlockNode nextBlock = block.next as BlockNode;
       if (nextBlock.style == block.style) {
         nextBlock.moveChildren(block);
         nextBlock.unlink();

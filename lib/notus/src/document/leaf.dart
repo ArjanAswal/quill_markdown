@@ -49,11 +49,11 @@ abstract class LeafNode extends Node
   ///
   /// In case a new node is actually split from this one, it inherits this
   /// node's style.
-  LeafNode splitAt(int index) {
+  LeafNode? splitAt(int index) {
     assert(index >= 0 && index <= length);
     if (index == 0) return this;
     if (index == length && isLast) return null;
-    if (index == length && !isLast) return next as LeafNode;
+    if (index == length && !isLast) return next as LeafNode?;
 
     final text = _value;
     _value = text.substring(0, index);
@@ -68,7 +68,7 @@ abstract class LeafNode extends Node
   ///
   /// Splitting logic is identical to one described in [splitAt], meaning this
   /// method may return `null`.
-  LeafNode cutAt(int index) {
+  LeafNode? cutAt(int index) {
     assert(index >= 0 && index <= length);
     final cut = splitAt(index);
     cut?.unlink();
@@ -89,13 +89,13 @@ abstract class LeafNode extends Node
         'Actual node length: ${this.length}.');
     // Since `index < this.length` (guarded by assert) below line
     // always returns a new node.
-    final target = splitAt(index);
+    final target = splitAt(index)!;
     target.splitAt(length);
     return target;
   }
 
   /// Formats this node and optimizes it with adjacent leaf nodes if needed.
-  void formatAndOptimize(NotusStyle style) {
+  void formatAndOptimize(NotusStyle? style) {
     if (style != null && style.isNotEmpty) {
       applyStyle(style);
     }
@@ -125,7 +125,7 @@ abstract class LeafNode extends Node
   }
 
   @override
-  LineNode get parent => super.parent as LineNode;
+  LineNode? get parent => super.parent as LineNode?;
 
   @override
   int get length => _value.length;
@@ -139,39 +139,39 @@ abstract class LeafNode extends Node
   String toPlainText() => _value;
 
   @override
-  void insert(int index, String value, NotusStyle style) {
+  void insert(int index, String value, NotusStyle? style) {
     assert(index >= 0 && (index <= length), 'Index: $index, Length: $length.');
     assert(value.isNotEmpty);
     final node = LeafNode(value);
     if (index == length) {
       insertAfter(node);
     } else {
-      splitAt(index).insertBefore(node);
+      splitAt(index)!.insertBefore(node);
     }
     node.formatAndOptimize(style);
   }
 
   @override
-  void retain(int index, int length, NotusStyle style) {
+  void retain(int index, int? length, NotusStyle? style) {
     if (style == null) return;
 
-    final local = math.min(this.length - index, length);
+    final local = math.min(this.length - index, length!);
     final node = isolate(index, local);
 
     final remaining = length - local;
     if (remaining > 0) {
       assert(node.next != null);
-      node.next.retain(0, remaining, style);
+      node.next!.retain(0, remaining, style);
     }
     // Optimize at the very end
     node.formatAndOptimize(style);
   }
 
   @override
-  void delete(int index, int length) {
+  void delete(int index, int? length) {
     assert(index < this.length);
 
-    final local = math.min(this.length - index, length);
+    final local = math.min(this.length - index, length!);
     final target = isolate(index, local);
     // Memorize siblings before un-linking.
     final needsOptimize = target.previous;
@@ -181,7 +181,7 @@ abstract class LeafNode extends Node
     final remaining = length - local;
     if (remaining > 0) {
       assert(actualNext != null);
-      actualNext.delete(0, remaining);
+      actualNext!.delete(0, remaining);
     }
 
     if (needsOptimize != null) needsOptimize.optimize();
@@ -198,9 +198,9 @@ abstract class LeafNode extends Node
   /// the same style.
   @override
   void optimize() {
-    var node = this;
+    LeafNode node = this;
     if (!node.isFirst) {
-      LeafNode mergeWith = node.previous;
+      LeafNode mergeWith = node.previous as LeafNode;
       if (mergeWith.style == node.style) {
         mergeWith._value += node.value;
         node.unlink();
@@ -208,7 +208,7 @@ abstract class LeafNode extends Node
       }
     }
     if (!node.isLast) {
-      LeafNode mergeWith = node.next;
+      LeafNode mergeWith = node.next as LeafNode;
       if (mergeWith.style == node.style) {
         node._value += mergeWith._value;
         mergeWith.unlink();

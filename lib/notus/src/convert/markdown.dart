@@ -7,7 +7,7 @@ import 'dart:convert';
 import 'package:quill_markdown/notus/notus.dart';
 import 'package:quill_markdown/quill_delta/quill_delta.dart';
 
-class NotusMarkdownCodec extends Codec<Delta, String> {
+class NotusMarkdownCodec extends Codec<Delta, String?> {
   const NotusMarkdownCodec();
 
   @override
@@ -18,7 +18,7 @@ class NotusMarkdownCodec extends Codec<Delta, String> {
 }
 
 class _NotusMarkdownDecoder extends Converter<String, Delta> {
-  final List<Map<String, dynamic>> _attributesByStyleLength = [
+  final List<Map<String, dynamic>?> _attributesByStyleLength = [
     null,
     {'i': true}, // _
     {'b': true}, // **
@@ -41,7 +41,7 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
     final delta = Delta();
 
     if (_allLinesEmpty(lines)) {
-      Map<String, dynamic> style;
+      Map<String, dynamic>? style;
       _handleSpan(lines[0], delta, true, style);
     } else {
       for (var line in lines) {
@@ -62,8 +62,7 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
     return true;
   }
 
-  void _handleLine(String line, Delta delta,
-      [Map<String, dynamic> attributes, bool isBlock]) {
+  void _handleLine(String line, Delta delta, [Map<String, dynamic>? attributes, bool? isBlock]) {
     if (_handleBlockQuote(line, delta, attributes)) {
       return;
     }
@@ -81,8 +80,7 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
 
   /// Markdown supports headings and blocks within blocks (except for within code)
   /// but not blocks within headers, or ul within
-  bool _handleBlock(String line, Delta delta,
-      [Map<String, dynamic> attributes]) {
+  bool _handleBlock(String line, Delta delta, [Map<String, dynamic>? attributes]) {
     var match;
 
     match = _codeRegExp.matchAsPrefix(line);
@@ -92,9 +90,7 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
     }
     if (_inBlockStack) {
       delta.insert(
-          line + '\n',
-          NotusAttribute.code
-              .toJson()); // TODO: replace with?: {'quote': true})
+          line + '\n', NotusAttribute.code.toJson()); // TODO: replace with?: {'quote': true})
       // Don't bother testing for code blocks within block stacks
       return true;
     }
@@ -108,13 +104,11 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
   }
 
   /// all blocks are supported within bq
-  bool _handleBlockQuote(String line, Delta delta,
-      [Map<String, dynamic> attributes]) {
+  bool _handleBlockQuote(String line, Delta delta, [Map<String, dynamic>? attributes]) {
     var match = _bqRegExp.matchAsPrefix(line);
     if (match != null) {
-      var span = match.group(1);
-      var newAttributes =
-          NotusAttribute.bq.toJson(); // NotusAttribute.bq.toJson();
+      var span = match.group(1)!;
+      var newAttributes = NotusAttribute.bq.toJson(); // NotusAttribute.bq.toJson();
       if (attributes != null) {
         newAttributes.addAll(attributes);
       }
@@ -126,13 +120,12 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
   }
 
   /// ol is supported within ol and bq, but not supported within ul
-  bool _handleOrderedList(String line, Delta delta,
-      [Map<String, dynamic> attributes]) {
+  bool _handleOrderedList(String line, Delta delta, [Map<String, dynamic>? attributes]) {
     var match = _olRegExp.matchAsPrefix(line);
     if (match != null) {
 // TODO: support nesting
 //      var depth =  match.group(1).length / 3;
-      var span = match.group(2);
+      var span = match.group(2)!;
       var newAttributes = NotusAttribute.ol.toJson();
       if (attributes != null) {
         newAttributes.addAll(attributes);
@@ -144,12 +137,11 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
     return false;
   }
 
-  bool _handleUnorderedList(String line, Delta delta,
-      [Map<String, dynamic> attributes]) {
+  bool _handleUnorderedList(String line, Delta delta, [Map<String, dynamic>? attributes]) {
     var match = _ulRegExp.matchAsPrefix(line);
     if (match != null) {
 //      var depth = match.group(1).length / 3;
-      var span = match.group(2);
+      var span = match.group(2)!;
       var newAttributes = NotusAttribute.ul.toJson();
       if (attributes != null) {
         newAttributes.addAll(attributes);
@@ -161,11 +153,10 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
     return false;
   }
 
-  bool _handleHeading(String line, Delta delta,
-      [Map<String, dynamic> attributes]) {
+  bool _handleHeading(String line, Delta delta, [Map<String, dynamic>? attributes]) {
     var match = _headingRegExp.matchAsPrefix(line);
     if (match != null) {
-      var level = match.group(1).length;
+      var level = match.group(1)!.length;
       var newAttributes = <String, dynamic>{
         'heading': level
       }; // NotusAttribute.heading.withValue(level).toJson();
@@ -173,7 +164,7 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
         newAttributes.addAll(attributes);
       }
 
-      var span = match.group(2);
+      var span = match.group(2)!;
       // TODO: true or false?
       _handleSpan(span, delta, true, newAttributes, true);
 //      delta.insert('\n', attribute.toJson());
@@ -183,9 +174,8 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
     return false;
   }
 
-  void _handleSpan(String span, Delta delta, bool addNewLine,
-      Map<String, dynamic> outerStyle,
-      [bool isBlock]) {
+  void _handleSpan(String span, Delta delta, bool addNewLine, Map<String, dynamic>? outerStyle,
+      [bool? isBlock]) {
     var start = _handleStyles(span, delta, outerStyle);
     span = span.substring(start);
 
@@ -210,7 +200,7 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
     }
   }
 
-  int _handleStyles(String span, Delta delta, Map<String, dynamic> outerStyle) {
+  int _handleStyles(String span, Delta delta, Map<String, dynamic>? outerStyle) {
     var start = 0;
 
     var matches = _styleRegExp.allMatches(span);
@@ -219,26 +209,20 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
         var validInlineStyles = _getValidInlineStyles(outerStyle);
         if (span.substring(match.start - 1, match.start) == '[') {
           var text = span.substring(start, match.start - 1);
-          validInlineStyles != null
-              ? delta.insert(text, validInlineStyles)
-              : delta.insert(text);
+          validInlineStyles != null ? delta.insert(text, validInlineStyles) : delta.insert(text);
           start = match.start -
               1 +
-              _handleLinks(
-                  span.substring(match.start - 1), delta, validInlineStyles);
+              _handleLinks(span.substring(match.start - 1), delta, validInlineStyles);
           return;
         } else {
           var text = span.substring(start, match.start);
 
-          validInlineStyles != null
-              ? delta.insert(text, validInlineStyles)
-              : delta.insert(text);
+          validInlineStyles != null ? delta.insert(text, validInlineStyles) : delta.insert(text);
         }
       }
 
-      var text = match.group(2);
-      var newStyle = Map<String, dynamic>.from(
-          _attributesByStyleLength[match.group(1).length]);
+      var text = match.group(2)!;
+      var newStyle = Map<String, dynamic>.from(_attributesByStyleLength[match.group(1)!.length]!);
 
       var validInlineStyles = _getValidInlineStyles(outerStyle);
       if (validInlineStyles != null) {
@@ -252,8 +236,8 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
     return start;
   }
 
-  Map<String, dynamic> _getValidInlineStyles(Map<String, dynamic> outerStyle) {
-    Map<String, dynamic> leafStyles;
+  Map<String, dynamic>? _getValidInlineStyles(Map<String, dynamic>? outerStyle) {
+    Map<String, dynamic>? leafStyles;
 
     if (outerStyle == null) {
       return null;
@@ -268,15 +252,13 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
     }
 
     if (outerStyle.containsKey(NotusAttribute.link.key)) {
-      leafStyles = {
-        NotusAttribute.link.key: outerStyle[NotusAttribute.link.key]
-      };
+      leafStyles = {NotusAttribute.link.key: outerStyle[NotusAttribute.link.key]};
     }
 
     return leafStyles;
   }
 
-  int _handleLinks(String span, Delta delta, Map<String, dynamic> outerStyle) {
+  int _handleLinks(String span, Delta delta, Map<String, dynamic>? outerStyle) {
     var start = 0;
 
     var matches = _linkRegExp.allMatches(span);
@@ -286,7 +268,7 @@ class _NotusMarkdownDecoder extends Converter<String, Delta> {
         delta.insert(text); //, outerStyle);
       }
 
-      var text = match.group(1);
+      var text = match.group(1)!;
       var href = match.group(2);
       var newAttributes = <String, dynamic>{
         'a': href
@@ -319,7 +301,7 @@ class _NotusMarkdownEncoder extends Converter<Delta, String> {
     final iterator = DeltaIterator(input);
     final buffer = StringBuffer();
     final lineBuffer = StringBuffer();
-    NotusAttribute<String> currentBlockStyle;
+    NotusAttribute<String?>? currentBlockStyle;
     var currentInlineStyle = NotusStyle();
     var currentBlockLines = <String>[];
 
@@ -333,7 +315,7 @@ class _NotusMarkdownEncoder extends Converter<Delta, String> {
       return true;
     }
 
-    void _handleBlock(NotusAttribute<String> blockStyle) {
+    void _handleBlock(NotusAttribute<String?>? blockStyle) {
       if (currentBlockLines.isEmpty) {
         return; // Empty block
       }
@@ -360,13 +342,12 @@ class _NotusMarkdownEncoder extends Converter<Delta, String> {
       buffer.writeln();
     }
 
-    void _handleSpan(String text, Map<String, dynamic> attributes) {
+    void _handleSpan(String text, Map<String, dynamic>? attributes) {
       final style = NotusStyle.fromJson(attributes);
-      currentInlineStyle =
-          _writeInline(lineBuffer, text, style, currentInlineStyle);
+      currentInlineStyle = _writeInline(lineBuffer, text, style, currentInlineStyle);
     }
 
-    void _handleLine(Map<String, dynamic> attributes) {
+    void _handleLine(Map<String, dynamic>? attributes) {
       final style = NotusStyle.fromJson(attributes);
       final lineBlock = style.get(NotusAttribute.block);
       if (lineBlock == currentBlockStyle) {
@@ -383,7 +364,7 @@ class _NotusMarkdownEncoder extends Converter<Delta, String> {
 
     while (iterator.hasNext) {
       final op = iterator.next();
-      final lf = op.data.indexOf('\n');
+      final lf = op!.data.indexOf('\n');
       if (lf == -1) {
         _handleSpan(op.data, op.attributes);
       } else {
@@ -432,8 +413,8 @@ class _NotusMarkdownEncoder extends Converter<Delta, String> {
     return ' ' * (text.length - result.length);
   }
 
-  NotusStyle _writeInline(StringBuffer buffer, String text, NotusStyle style,
-      NotusStyle currentStyle) {
+  NotusStyle _writeInline(
+      StringBuffer buffer, String text, NotusStyle style, NotusStyle currentStyle) {
     // First close any current styles if needed
     for (var value in currentStyle.values) {
       if (value.scope == NotusAttributeScope.line) continue;
@@ -457,18 +438,17 @@ class _NotusMarkdownEncoder extends Converter<Delta, String> {
     return style;
   }
 
-  void _writeAttribute(StringBuffer buffer, NotusAttribute attribute,
-      {bool close = false}) {
+  void _writeAttribute(StringBuffer buffer, NotusAttribute? attribute, {bool close = false}) {
     if (attribute == NotusAttribute.bold) {
       _writeBoldTag(buffer);
     } else if (attribute == NotusAttribute.italic) {
       _writeItalicTag(buffer);
-    } else if (attribute.key == NotusAttribute.link.key) {
-      _writeLinkTag(buffer, attribute as NotusAttribute<String>, close: close);
+    } else if (attribute!.key == NotusAttribute.link.key) {
+      _writeLinkTag(buffer, attribute as NotusAttribute<String?>?, close: close);
     } else if (attribute.key == NotusAttribute.heading.key) {
-      _writeHeadingTag(buffer, attribute as NotusAttribute<int>);
+      _writeHeadingTag(buffer, attribute as NotusAttribute<int?>);
     } else if (attribute.key == NotusAttribute.block.key) {
-      _writeBlockTag(buffer, attribute as NotusAttribute<String>, close: close);
+      _writeBlockTag(buffer, attribute as NotusAttribute<String?>?, close: close);
     } else {
       throw ArgumentError('Cannot handle $attribute');
     }
@@ -482,22 +462,20 @@ class _NotusMarkdownEncoder extends Converter<Delta, String> {
     buffer.write(kItalic);
   }
 
-  void _writeLinkTag(StringBuffer buffer, NotusAttribute<String> link,
-      {bool close = false}) {
+  void _writeLinkTag(StringBuffer buffer, NotusAttribute<String?>? link, {bool close = false}) {
     if (close) {
-      buffer.write('](${link.value})');
+      buffer.write('](${link!.value})');
     } else {
       buffer.write('[');
     }
   }
 
-  void _writeHeadingTag(StringBuffer buffer, NotusAttribute<int> heading) {
-    var level = heading.value;
+  void _writeHeadingTag(StringBuffer buffer, NotusAttribute<int?> heading) {
+    var level = heading.value!;
     buffer.write('#' * level + ' ');
   }
 
-  void _writeBlockTag(StringBuffer buffer, NotusAttribute<String> block,
-      {bool close = false}) {
+  void _writeBlockTag(StringBuffer buffer, NotusAttribute<String?>? block, {bool close = false}) {
     if (block == NotusAttribute.code) {
       if (close) {
         buffer.write('\n```');
@@ -507,7 +485,7 @@ class _NotusMarkdownEncoder extends Converter<Delta, String> {
     } else {
       if (close) return; // no close tag needed for simple blocks.
 
-      final tag = kSimpleBlocks[block];
+      final tag = kSimpleBlocks[block!];
       buffer.write(tag);
     }
   }

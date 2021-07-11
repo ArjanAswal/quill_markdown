@@ -194,7 +194,7 @@ class NotusDocument {
   ///   for every character within this range (line-break characters excluded).
   NotusStyle collectStyle(int index, int length) {
     var result = lookupLine(index);
-    LineNode line = result.node;
+    LineNode line = result.node as LineNode;
     return line.collectStyle(result.offset, length);
   }
 
@@ -203,7 +203,7 @@ class NotusDocument {
     // TODO: prevent user from moving caret after last line-break.
     var result = _root.lookup(offset, inclusive: true);
     if (result.node is LineNode) return result;
-    BlockNode block = result.node;
+    BlockNode block = result.node as BlockNode;
     return block.lookup(result.offset, inclusive: true);
   }
 
@@ -234,7 +234,7 @@ class NotusDocument {
       } else if (op.attributes != null) {
         _root.retain(offset, op.length, attributes);
       }
-      if (!op.isDelete) offset += op.length;
+      if (!op.isDelete) offset += op.length!;
     }
     _delta = _delta.compose(change);
 
@@ -282,7 +282,7 @@ class NotusDocument {
         throw ArgumentError.value(doc,
             'Document Delta can only contain insert operations but ${op.key} found.');
       }
-      offset += op.length;
+      offset += op.length!;
     }
     // Must remove last line if it's empty and with no styles.
     // TODO: find a way for DocumentRoot to not create extra line when composing initial delta.
