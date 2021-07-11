@@ -88,7 +88,8 @@ String markdownToQuill(String content) {
         .replaceAll('"block":"ul"', '"list":"bullet"')
         .replaceAll('"block":"ol"', '"list":"ordered"')
         .replaceAll('"block":"code"', '"code-block":true')
-        .replaceAll(',"attributes":{"a":"', ',"attributes":{"link":"')
+        .replaceAllMapped(RegExp(r',"attributes":{(.*?)"a":"(.+?)"(.*?)}'),
+            (Match m) => ',"attributes":{${m[1]}"link":"${m[2]}"${m[3]}}')
         .replaceAll('{"insert":"​","attributes":{"embed":{"type":"hr"}}},', '')
         .replaceAll('{"insert":"​","attributes":{"embed":{"type":"hr"}}}', '');
   } catch (error) {
