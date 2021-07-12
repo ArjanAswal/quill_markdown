@@ -15,7 +15,8 @@ String? quillToMarkdown(String content) {
         .replaceAll('"blockquote":"true"', '"block":"quote"')
         .replaceAll('"blockquote":"quote"', '"block":"quote"')
         .replaceAll('"code-block":true', '"block":"code"')
-        .replaceAll(',"attributes":{"link":"', ',"attributes":{"a":"')
+        .replaceAllMapped(RegExp(r',"attributes":{(.*?)"link":"(.+?)"(.*?)}'),
+            (Match m) => ',"attributes":{${m[1]}"a":"${m[2]}"${m[3]}}')
         .replaceAll('{"insert":"​","attributes":{"embed":{"type":"hr"}}},', '')
         .replaceAll('{"insert":"​","attributes":{"embed":{"type":"hr"}}}', '')
         .replaceAll('"underline":true,', '')
@@ -88,7 +89,8 @@ String? markdownToQuill(String? content) {
         .replaceAll('"block":"ul"', '"list":"bullet"')
         .replaceAll('"block":"ol"', '"list":"ordered"')
         .replaceAll('"block":"code"', '"code-block":true')
-        .replaceAll(',"attributes":{"a":"', ',"attributes":{"link":"')
+        .replaceAllMapped(RegExp(r',"attributes":{(.*?)"a":"(.+?)"(.*?)}'),
+            (Match m) => ',"attributes":{${m[1]}"link":"${m[2]}"${m[3]}}')
         .replaceAll('{"insert":"​","attributes":{"embed":{"type":"hr"}}},', '')
         .replaceAll('{"insert":"​","attributes":{"embed":{"type":"hr"}}}', '');
   } catch (error) {
