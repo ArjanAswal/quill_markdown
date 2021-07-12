@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:quill_markdown/notus/convert.dart';
 import 'notus/notus.dart';
 
-String quillToMarkdown(String content) {
+String? quillToMarkdown(String content) {
   try {
     return notusMarkdown.encode(NotusDocument.fromJson(jsonDecode(content
         .replaceAll('"header":1', '"heading":1')
@@ -15,7 +15,8 @@ String quillToMarkdown(String content) {
         .replaceAll('"blockquote":"true"', '"block":"quote"')
         .replaceAll('"blockquote":"quote"', '"block":"quote"')
         .replaceAll('"code-block":true', '"block":"code"')
-        .replaceAll(',"attributes":{"link":"', ',"attributes":{"a":"')
+        .replaceAllMapped(RegExp(r',"attributes":{(.*?)"link":"(.+?)"(.*?)}'),
+            (Match m) => ',"attributes":{${m[1]}"a":"${m[2]}"${m[3]}}')
         .replaceAll('{"insert":"​","attributes":{"embed":{"type":"hr"}}},', '')
         .replaceAll('{"insert":"​","attributes":{"embed":{"type":"hr"}}}', '')
         .replaceAll('"underline":true,', '')
@@ -75,7 +76,7 @@ String quillToMarkdown(String content) {
   }
 }
 
-String markdownToQuill(String content) {
+String? markdownToQuill(String? content) {
   try {
     return jsonEncode(notusMarkdown.decode(content))
         .toString()

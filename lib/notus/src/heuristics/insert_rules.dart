@@ -12,7 +12,7 @@ abstract class InsertRule {
 
   /// Applies heuristic rule to an insert operation on a [document] and returns
   /// resulting [Delta].
-  Delta apply(Delta document, int index, String text);
+  Delta? apply(Delta document, int index, String text);
 }
 
 /// Fallback rule which simply inserts text as-is without any special handling.
@@ -34,19 +34,19 @@ class CatchAllInsertRule extends InsertRule {
 class PreserveLineStyleOnSplitRule extends InsertRule {
   const PreserveLineStyleOnSplitRule();
 
-  bool isEdgeLineSplit(Operation before, Operation after) {
+  bool isEdgeLineSplit(Operation? before, Operation after) {
     if (before == null) return true; // split at the beginning of a doc
     return before.data.endsWith('\n') || after.data.startsWith('\n');
   }
 
   @override
-  Delta apply(Delta document, int index, String text) {
+  Delta? apply(Delta document, int index, String text) {
     if (text != '\n') return null;
 
     final iter = DeltaIterator(document);
     final before = iter.skip(index);
     final after = iter.next();
-    if (isEdgeLineSplit(before, after)) return null;
+    if (isEdgeLineSplit(before, after!)) return null;
     final result = Delta()..retain(index);
     if (after.data.contains('\n')) {
       // It is not allowed to combine line and inline styles in insert
@@ -58,10 +58,10 @@ class PreserveLineStyleOnSplitRule extends InsertRule {
       return result;
     }
     // Continue looking for line-break.
-    Map<String, dynamic> attributes;
+    Map<String, dynamic>? attributes;
     while (iter.hasNext) {
       final op = iter.next();
-      final lf = op.data.indexOf('\n');
+      final lf = op!.data.indexOf('\n');
       if (lf >= 0) {
         attributes = op.attributes;
         break;
@@ -79,17 +79,16 @@ class ResetLineFormatOnNewLineRule extends InsertRule {
   const ResetLineFormatOnNewLineRule();
 
   @override
-  Delta apply(Delta document, int index, String text) {
+  Delta? apply(Delta document, int index, String text) {
     if (text != '\n') return null;
 
     final iter = DeltaIterator(document);
     iter.skip(index);
     final target = iter.next();
 
-    if (target.data.startsWith('\n')) {
-      Map<String, dynamic> resetStyle;
-      if (target.attributes != null &&
-          target.attributes.containsKey(NotusAttribute.heading.key)) {
+    if (target != null && target.data.startsWith('\n')) {
+      Map<String, dynamic>? resetStyle;
+      if (target.attributes != null && target.attributes!.containsKey(NotusAttribute.heading.key)) {
         resetStyle = NotusAttribute.heading.unset.toJson();
       }
       return Delta()
@@ -108,21 +107,21 @@ class ResetLineFormatOnNewLineRule extends InsertRule {
 class AutoExitBlockRule extends InsertRule {
   const AutoExitBlockRule();
 
-  bool isEmptyLine(Operation previous, Operation target) {
-    return (previous == null || previous.data.endsWith('\n')) &&
-        target.data.startsWith('\n');
+  bool isEmptyLine(Operation? previous, Operation target) {
+    return (previous == null || previous.data.endsWith('\n')) && target.data.startsWith('\n');
   }
 
   @override
-  Delta apply(Delta document, int index, String text) {
+  Delta? apply(Delta document, int index, String text) {
     if (text != '\n') return null;
 
     final iter = DeltaIterator(document);
     final previous = iter.skip(index);
     final target = iter.next();
-    final isInBlock = target.isNotPlain &&
-        target.attributes.containsKey(NotusAttribute.block.key);
-    if (isEmptyLine(previous, target) && isInBlock) {
+    final isInBlock = target != null &&
+        target.isNotPlain &&
+        target.attributes!.containsKey(NotusAttribute.block.key);
+    if (isEmptyLine(previous, target!) && isInBlock) {
       // We reset block style even if this line is not the last one in it's
       // block which effectively splits the block into two.
       // TODO: For code blocks this should not split the block but allow inserting as many lines as needed.
@@ -144,7 +143,7 @@ class PreserveInlineStylesRule extends InsertRule {
   const PreserveInlineStylesRule();
 
   @override
-  Delta apply(Delta document, int index, String text) {
+  Delta? apply(Delta document, int index, String text) {
     // This rule is only applicable to characters other than line-break.
     if (text.contains('\n')) return null;
 
@@ -156,8 +155,7 @@ class PreserveInlineStylesRule extends InsertRule {
     if (previous == null || previous.data.contains('\n')) return null;
 
     final attributes = previous.attributes;
-    final hasLink =
-        (attributes != null && attributes.containsKey(NotusAttribute.link.key));
+    final hasLink = (attributes != null && attributes.containsKey(NotusAttribute.link.key));
     if (!hasLink) {
       return Delta()
         ..retain(index)
@@ -166,7 +164,7 @@ class PreserveInlineStylesRule extends InsertRule {
     // Special handling needed for inserts inside fragments with link attribute.
     // Link style should only be preserved if insert occurs inside the fragment.
     // Link style should NOT be preserved on the boundaries.
-    var noLinkAttributes = previous.attributes;
+    var noLinkAttributes = previous.attributes!;
     noLinkAttributes.remove(NotusAttribute.link.key);
     final noLinkResult = Delta()
       ..retain(index)
@@ -182,8 +180,7 @@ class PreserveInlineStylesRule extends InsertRule {
       return noLinkResult;
     }
     // We must make sure links are identical in previous and next operations.
-    if (attributes[NotusAttribute.link.key] ==
-        nextAttributes[NotusAttribute.link.key]) {
+    if (attributes![NotusAttribute.link.key] == nextAttributes[NotusAttribute.link.key]) {
       return Delta()
         ..retain(index)
         ..insert(text, attributes);
@@ -199,7 +196,7 @@ class AutoFormatLinksRule extends InsertRule {
   const AutoFormatLinksRule();
 
   @override
-  Delta apply(Delta document, int index, String text) {
+  Delta? apply(Delta document, int index, String text) {
     // This rule applies to a space inserted after a link, so we can ignore
     // everything else.
     if (text != ' ') return null;
@@ -222,8 +219,7 @@ class AutoFormatLinksRule extends InsertRule {
       // Do nothing if already formatted as link.
       if (attributes.containsKey(NotusAttribute.link.key)) return null;
 
-      attributes
-          .addAll(NotusAttribute.link.fromString(link.toString()).toJson());
+      attributes.addAll(NotusAttribute.link.fromString(link.toString()).toJson());
       return Delta()
         ..retain(index - candidate.length)
         ..retain(candidate.length, attributes)
@@ -242,11 +238,11 @@ class ForceNewlineForInsertsAroundEmbedRule extends InsertRule {
   const ForceNewlineForInsertsAroundEmbedRule();
 
   @override
-  Delta apply(Delta document, int index, String text) {
+  Delta? apply(Delta document, int index, String text) {
     final iter = DeltaIterator(document);
     final previous = iter.skip(index);
     final target = iter.next();
-    final beforeEmbed = target.data == EmbedNode.kPlainTextPlaceholder;
+    final beforeEmbed = target?.data == EmbedNode.kPlainTextPlaceholder;
     final afterEmbed = previous?.data == EmbedNode.kPlainTextPlaceholder;
     if (beforeEmbed || afterEmbed) {
       final delta = Delta()..retain(index);
@@ -273,7 +269,7 @@ class PreserveBlockStyleOnPasteRule extends InsertRule {
   }
 
   @override
-  Delta apply(Delta document, int index, String text) {
+  Delta? apply(Delta document, int index, String text) {
     if (!text.contains('\n') || text.length == 1) {
       // Only interested in text containing at least one line-break and at least
       // one more character.
@@ -284,18 +280,18 @@ class PreserveBlockStyleOnPasteRule extends InsertRule {
     iter.skip(index);
 
     // Look for next line-break.
-    Map<String, dynamic> lineStyle;
+    Map<String, dynamic>? lineStyle;
     while (iter.hasNext) {
       final op = iter.next();
-      final lf = op.data.indexOf('\n');
+      final lf = op!.data.indexOf('\n');
       if (lf >= 0) {
         lineStyle = op.attributes;
         break;
       }
     }
 
-    Map<String, dynamic> resetStyle;
-    Map<String, dynamic> blockStyle;
+    Map<String, dynamic>? resetStyle;
+    Map<String, dynamic>? blockStyle;
     if (lineStyle != null) {
       if (lineStyle.containsKey(NotusAttribute.heading.key)) {
         resetStyle = NotusAttribute.heading.unset.toJson();
