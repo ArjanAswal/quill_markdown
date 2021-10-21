@@ -1,6 +1,6 @@
 name: quill_markdown
 description: A quill to markdown converter and vice versa
-version: 0.0.3
+version: 0.1.0
 homepage: https://github.com/ArjanAswal/quill_markdown.git
 repository: https://github.com/ArjanAswal/quill_markdown.git
 
