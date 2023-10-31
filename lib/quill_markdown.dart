@@ -27,14 +27,14 @@ String? quillToMarkdown(String content) {
         .replaceAll('"list":"bullet"', '"block":"ul"')
         .replaceAllMapped(
             RegExp(
-              r'{"insert":{"image":"[A-Za-z0-9:.,?\/\\!@_]{0,100}"}},',
+              r'\{"insert":{"image":"([^"]+)"\}\}',
             ),
-            (match) => '')
+            (match) => '''{"insert":"![Image](${match.group(1)})"}''')
         .replaceAllMapped(
             RegExp(
-              r'{"insert":{"image":"[A-Za-z0-9:.,?\/\\!@_]{0,100}"}}',
+              r'\{"insert":{"image":"([^"]+)"\}\},',
             ),
-            (match) => '')
+            (match) => '''{"insert":"![Image](${match.group(1)})"}''')
         .replaceAllMapped(
             RegExp(
               r'"indent":[A-Za-z0-9]{0,100},',
